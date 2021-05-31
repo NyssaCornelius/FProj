@@ -42,7 +42,7 @@ be_verbose = True
 #This data is from 1988 to 2020.
 #We changed the xlsx file to a xls file because of compatibility issues with pandas reading a xlsx file with xlrd.
 #This file is originally from https://www.bls.gov/web/wkstp/monthly-listing.xlsx
-work_stoppage_df = pd.read_excel(".\WorkStoppage\work_stop_monthly.xls", 
+work_stoppage_df = pd.read_excel("work_stop_monthly.xls", 
     header=1, skipfooter=6, dtype={"Industry code[1]":int}   )
 #There is an entry or two with the states list empty, we replace the NaN value with an empty string.
 work_stoppage_df.fillna("", inplace=True)
@@ -52,12 +52,12 @@ work_stoppage_df.fillna("", inplace=True)
 #in the Current Employment Statistics files. This doesn't give a perfect match up,
 #so we have to match many of the entries by hand.
 #This file is originally from https://download.bls.gov/pub/time.series/ce/ce.industry
-industry_lookup_df = pd.read_csv(".\CurrentEmploymentStats\ce.industry", sep="\t")
+industry_lookup_df = pd.read_csv("ce.industry", sep="\t")
 
 #This text file contains info about each series_id.
 #We use it to turn a BLS industry code into a Current Employment Statistic series_id.
 #This file is orginally from https://download.bls.gov/pub/time.series/ce/ce.series
-current_employment_series_df = pd.read_csv(".\CurrentEmploymentStats\ce.series.txt", sep="\t", header=0,
+current_employment_series_df = pd.read_csv("ce.series.txt", sep="\t", header=0,
     names=['series_id', 'supersector_code', 'industry_code',
        'data_type_code', 'seasonal', 'series_title', 'footnote_codes',
        'begin_year', 'begin_period', 'end_year', 'end_period'],
@@ -76,7 +76,7 @@ current_employment_series_df = current_employment_series_df[
 #This text file contains the value for the each Current Employment Statistic.
 #This data set is from 1939 to 2021, but not for all series. It is very spotty.
 #This file is originally from https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries
-current_employment_statistic_df = pd.read_csv(".\CurrentEmploymentStats\ce.data.0.AllCESSeries", 
+current_employment_statistic_df = pd.read_csv("ce.data.0.AllCESSeries", 
     sep="\t", header=0, 
     names=['series_id', 'year', 'period', 'value','footnote_codes'],
     converters={'series_id':str.strip} )
@@ -99,7 +99,7 @@ current_employment_statistic_df = pd.read_csv(".\CurrentEmploymentStats\ce.data.
 #series in the entries of sa.data.0.Current. Unfortunately, the industry data is all 
 #over the place with this data set. Using this might require a lot of data matching done by hand,
 #it doesn't even look like we can easily pull average wage data for an entire state.
-state_series_df = pd.read_csv(".\sa.series", delim_whitespace=True,
+state_series_df = pd.read_csv("sa_series.txt", delim_whitespace=True,
     names= ['series_id', 'state_code', 'area_code', 'industry_code', 'detail_code',
        'data_type_code', 'seasonal', 'benchmark_year', 'begin_year',
        'begin_period', 'end_year', 'end_period'],
@@ -109,7 +109,7 @@ state_series_df = state_series_df[ (state_series_df["data_type_code"]==4) ]
 
 
 #This text file contains the actual data for a given series.
-states_metro_employment_stats = pd.read_csv(".\StateMetroEmployment\sa.data.0.Current", sep="\s+")
+states_metro_employment_stats = pd.read_csv("sa.data.0.Current.csv", sep="\s+")
 #This uses SIC code for industry, or so they say. It doesn't look to match the actual SIC codes.
 #This isn't currently in use, because of matching the data with the work stoppage data.
 
@@ -762,7 +762,6 @@ for j in range(0,5):
 
 
 # In[ ]:
-
-
+work_stoppage_df.to_pickle(".\\PrelimEDA\\work_stop.pkl")
 
 
