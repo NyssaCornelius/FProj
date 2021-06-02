@@ -45,7 +45,8 @@ work_stop = work_stop.replace('[4]', np.NaN)
 work_stop['TotalDaysIdle'] = work_stop['TotalDaysIdle'].astype('int32')
 
 #TOMORROW TO-DO:
-    ##INSTALL GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH
+    ##CONFIGURE(?) GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH
+    #Rewatch for due date last class
 #1) make histogram of work stop
 #2) MORE EDA OF TIME SERIES
 #3) Make choropleth of states work stoppage and minimum wage - will need to do in plotly and dash
