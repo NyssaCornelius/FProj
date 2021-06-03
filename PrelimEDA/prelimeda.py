@@ -26,23 +26,44 @@ minwagestate = minwagestate[(minwagestate['State']!= 'District of Columbia') &\
 #do industries with the lowest wages have the more work stoppages?
 #do states with the lowest minimum wages have more work stoppages?
 
+# CLEAN UP DATA:
+    #Minimum wage:
 minwagestate['State'] = minwagestate['State'].astype('string')
 
-# hist(minwagestate)
-# mwgrouped = minwagestate.groupby(['Year', 'State'])
-# mwgrouped = mwgrouped.reset_index()
-
-# mwgrouped.boxplot()
-minwagestate.hist(column='Effective.Minimum.Wage')
-
-# minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["Year","State"])
-minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
-
+    #Work stoppage:
 work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle'})
 
-#Remove the weird [4] and make the column an integer data type
-work_stop = work_stop.replace('[4]', np.NaN)
-work_stop['TotalDaysIdle'] = work_stop['TotalDaysIdle'].astype('int32')
+#Remove the weird [4] and make the column an integer data type:
+# work_stop = work_stop.replace('[4]', np.NaN) #NOT NEEDED
+work_stop['TotalDaysIdle'] = pd.to_numeric(work_stop['TotalDaysIdle'], errors='coerce', downcast='integer')
+work_stop['TotalDaysIdle'] = work_stop['TotalDaysIdle'].astype('Int64')
+
+#Fix workstop end date:
+work_stop['Work stoppage ending date'] = pd.to_datetime(work_stop['Work stoppage ending date'], errors='coerce', format = '%Y-%m-%d')
+
+#Column for duration of work stoppage:
+    #Represents number of days
+work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['Work stoppage beginning date'])/np.timedelta64(1,'D')
+
+
+#VISUALIZATIONS:
+#NOTES:
+    #x-axes, per usual, are squished and need to be corrected. Can do this in jupyter more easily than Spyder.
+    
+
+#Minimum wage state data:
+minwagestate.hist(column='Effective.Minimum.Wage')
+minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
+
+
+#Work Stoppage state data:
+    #Need to put states into a list instead of a string:
+        # words = text.split(",")
+    #Need to quantify data by state using list comprehension as states are in lists:
+work_stop.boxplot(column='WSDuration', by = ["States"], rot = 75)
+
+work_stop.hist(column = "TotalDaysIdle") #Not super helpful
+
 
 #TOMORROW TO-DO:
     ##CONFIGURE(?) GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH
@@ -50,3 +71,5 @@ work_stop['TotalDaysIdle'] = work_stop['TotalDaysIdle'].astype('int32')
 #2) MORE EDA OF TIME SERIES
 #3) Make choropleth of states work stoppage and minimum wage - will need to do in plotly and dash
 #4) Can try to do jupyter-dash because prof wants it all in notebook form
+
+work_stop.dtypes
