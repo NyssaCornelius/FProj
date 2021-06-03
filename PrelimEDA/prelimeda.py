@@ -30,6 +30,58 @@ minwagestate = minwagestate[(minwagestate['State']!= 'District of Columbia') &\
     #Minimum wage:
 minwagestate['State'] = minwagestate['State'].astype('string')
 
+us_state_abbrev = {'Alabama': 'AL', 'Alaska': 'AK',
+'Arizona': 'AZ','Arkansas': 'AR',
+'California': 'CA',
+    'Colorado': 'CO',
+    'Connecticut': 'CT',
+    'Delaware': 'DE',
+    'Florida': 'FL',
+    'Georgia': 'GA',
+    'Hawaii': 'HI',
+    'Idaho': 'ID',
+    'Illinois': 'IL',
+    'Indiana': 'IN',
+    'Iowa': 'IA',
+    'Kansas': 'KS',
+    'Kentucky': 'KY',
+    'Louisiana': 'LA',
+    'Maine': 'ME',
+    'Maryland': 'MD',
+    'Massachusetts': 'MA',
+    'Michigan': 'MI',
+    'Minnesota': 'MN',
+    'Mississippi': 'MS',
+    'Missouri': 'MO',
+    'Montana': 'MT',
+    'Nebraska': 'NE',
+    'Nevada': 'NV',
+    'New Hampshire': 'NH',
+    'New Jersey': 'NJ',
+    'New Mexico': 'NM',
+    'New York': 'NY',
+    'North Carolina': 'NC',
+    'North Dakota': 'ND',
+    'Ohio': 'OH',
+    'Oklahoma': 'OK',
+    'Oregon': 'OR',
+    'Pennsylvania': 'PA',
+    'Rhode Island': 'RI',
+    'South Carolina': 'SC',
+    'South Dakota': 'SD',
+    'Tennessee': 'TN',
+    'Texas': 'TX',
+    'Utah': 'UT',
+    'Vermont': 'VT',
+    'Virginia': 'VA',
+    'Washington': 'WA',
+    'West Virginia': 'WV',
+    'Wisconsin': 'WI',
+    'Wyoming': 'WY'
+}                                                           
+
+minwagestate['StateCode'] = minwagestate['State'].map(us_state_abbrev)                                                             
+
     #Work stoppage:
 work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle'})
 
@@ -60,16 +112,19 @@ minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
     #Need to put states into a list instead of a string:
         # words = text.split(",")
     #Need to quantify data by state using list comprehension as states are in lists:
-work_stop.boxplot(column='WSDuration', by = ["States"], rot = 75)
-
+#Are these two essentially the same?
+work_stop.hist(column='WSDuration')
 work_stop.hist(column = "TotalDaysIdle") #Not super helpful
 
 
 #TOMORROW TO-DO:
     ##CONFIGURE(?) GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH
-#1) make histogram of work stop
+#1) make histogram of work stop - done, not helpful
 #2) MORE EDA OF TIME SERIES
 #3) Make choropleth of states work stoppage and minimum wage - will need to do in plotly and dash
 #4) Can try to do jupyter-dash because prof wants it all in notebook form
 
 work_stop.dtypes
+
+# minwagestate.isna().sum() #none contain nas
+# minwagestate.Year.unique() #all years are present
