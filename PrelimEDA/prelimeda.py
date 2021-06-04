@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 import plotly
+import xlrd
 
 clean_national_data = pd.read_pickle(".\\Cleaned\\clean_national_data.pkl")
 clean_state_data = pd.read_pickle(".\\Cleaned\\clean_state_data.pkl")
@@ -85,6 +86,7 @@ minwagestate['StateCode'] = minwagestate['State'].map(us_state_abbrev)
     #Work stoppage:
 work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle'})
 
+
 #Remove the weird [4] and make the column an integer data type:
 # work_stop = work_stop.replace('[4]', np.NaN) #NOT NEEDED
 work_stop['TotalDaysIdle'] = pd.to_numeric(work_stop['TotalDaysIdle'], errors='coerce', downcast='integer')
@@ -97,6 +99,8 @@ work_stop['Work stoppage ending date'] = pd.to_datetime(work_stop['Work stoppage
     #Represents number of days
 work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['Work stoppage beginning date'])/np.timedelta64(1,'D')
 
+#Change states from string to list of strings:
+work_stop['States'] = work_stop['States'].str.split(",")
 
 #VISUALIZATIONS:
 #NOTES:
@@ -104,27 +108,48 @@ work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['W
     
 
 #Minimum wage state data:
-minwagestate.hist(column='Effective.Minimum.Wage')
-minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
+# minwagestate.hist(column='Effective.Minimum.Wage')
+# minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
 
 
 #Work Stoppage state data:
     #Need to put states into a list instead of a string:
         # words = text.split(",")
     #Need to quantify data by state using list comprehension as states are in lists:
-#Are these two essentially the same?
-work_stop.hist(column='WSDuration')
-work_stop.hist(column = "TotalDaysIdle") #Not super helpful
+#Are these two essentially the same? Neither are normal, left skewed.
+# work_stop.hist(column='WSDuration')
+# work_stop.hist(column = "TotalDaysIdle")
 
 
 #TOMORROW TO-DO:
-    ##CONFIGURE(?) GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH
+    ##CONFIGURE(?) GIT LFS BECAUSE APPARENTLY THESE FILES ARE TOO FREAKING BIG...UGH - still don't understand
 #1) make histogram of work stop - done, not helpful
-#2) MORE EDA OF TIME SERIES
-#3) Make choropleth of states work stoppage and minimum wage - will need to do in plotly and dash
-#4) Can try to do jupyter-dash because prof wants it all in notebook form
+#3) Make choropleth of states work stoppage frequency - will need to do in plotly express
 
-work_stop.dtypes
 
-# minwagestate.isna().sum() #none contain nas
-# minwagestate.Year.unique() #all years are present
+#Reminders:
+    #compare wage data for a work stoppage at the state level with wage data
+    #for that industry at the national level
+    
+    #choropleth maps of states for work stoppage counts.
+    
+    
+#INDUSTRY DATA INFORMATION:
+    #Willing to go down to 3-digit NAICS code, if not fruitful then up to only 2-digit NAICS
+    #Best file will likely be 2-6 digit NAICS code xlsx file
+
+iCodes = pd.read_csv('/Users/nyssacornelius/Desktop/COMP4477/FProj/FProj/2017NAICS_Codes2_6digit.csv', header=0, usecols=[0,1,2], skiprows=[1])
+iCodes = iCodes.rename(columns={'2017 NAICS US   Code': 'NAICS_Code2017', '2017 NAICS US Title': 'IndustryTitle'})
+
+#Remove wonky unicode character:
+iCodes['IndustryTitle'] = iCodes['IndustryTitle'].str.replace('\ufffd', '')
+iCodes['IndustryTitle'] = iCodes['IndustryTitle'].astype('|S')
+
+#Will NAICS code need to be treated as a string to find it in work stoppage data?
+#How will we map industries from NAICS to work stop?
+#Would we use map to do this?
+
+
+
+iCodes.dtypes
+
