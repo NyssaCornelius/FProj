@@ -84,8 +84,7 @@ us_state_abbrev = {'Alabama': 'AL', 'Alaska': 'AK',
 minwagestate['StateCode'] = minwagestate['State'].map(us_state_abbrev)                                                             
 
     #Work stoppage:
-work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle'})
-
+work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle', 'Industry code[1]': 'IndustryCode'})
 
 #Remove the weird [4] and make the column an integer data type:
 # work_stop = work_stop.replace('[4]', np.NaN) #NOT NEEDED
@@ -97,7 +96,8 @@ work_stop['Work stoppage ending date'] = pd.to_datetime(work_stop['Work stoppage
 
 #Column for duration of work stoppage:
     #Represents number of days
-work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['Work stoppage beginning date'])/np.timedelta64(1,'D')
+work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['Work stoppage beginning date'])/np.timedelta64(1,'D')+1
+# work_stop['WSDuration'] = work_stop['WSDuration']+1
 
 #Change states from string to list of strings:
 work_stop['States'] = work_stop['States'].str.split(",")
@@ -143,13 +143,44 @@ iCodes = iCodes.rename(columns={'2017 NAICS US   Code': 'NAICS_Code2017', '2017 
 
 #Remove wonky unicode character:
 iCodes['IndustryTitle'] = iCodes['IndustryTitle'].str.replace('\ufffd', '')
-iCodes['IndustryTitle'] = iCodes['IndustryTitle'].astype('|S')
+# iCodes['IndustryTitle'] = iCodes['IndustryTitle'].astype('|S')
+
 
 #Will NAICS code need to be treated as a string to find it in work stoppage data?
 #How will we map industries from NAICS to work stop?
 #Would we use map to do this?
 
+#Extract only codes with 2-digits:
+codes2digit = iCodes.loc[iCodes['NAICS_Code2017'].str.contains('^\d{2}$'), ['NAICS_Code2017']].values
+
+#Extract only 3-digit codes:
+codes3digit = iCodes.loc[iCodes['NAICS_Code2017'].str.contains('^\d{3}$'), ['NAICS_Code2017']].values
+
+#Apply a dictionary to all 3-digit codes:
+# iCodes['2digit'] = iCodes['NAICS_Code2017'].str.extract(r'(\d{2})')
+iCodes['3digit'] = iCodes['NAICS_Code2017'].str.extract(r'(\d{3})')
+
+#Industry code abbreviated for work stop:
+work_stop['iCodeAb'] = work_stop['IndustryCode'].astype(str).str.extract(r'(\d{3})')
+
+#fill in nans:
+work_stop.loc[work_stop['iCodeAb'].isnull(), ['iCodeAb']] = work_stop.loc[work_stop['iCodeAb'].isnull(), ['IndustryCode']].values
+
+#Copy column:
+work_stop['iTitle'] = work_stop['iCodeAb'].astype(str)
+
+#Get name from industry code:
+work_stop['iTitle'] = work_stop['iTitle'].replace({k:v for k, v in zip(iCodes['NAICS_Code2017'], iCodes['IndustryTitle'])})
 
 
-iCodes.dtypes
+#Industry strikes aggregated by count:
+work_stop['iTitle'].value_counts()
+
+#Frequency of strikes by state:
+otherStates = {k:'Other' for k in ['East Coast States', 'Nationwide', 'Interstate']}
+stateCounts = pd.Series(np.concatenate(work_stop['States'])).str.strip().replace(otherStates)
+stateCounts = pd.Series(np.where(stateCounts == "", None, stateCounts)).value_counts().reset_index().rename({'index': 'State', 0: 'Counts'}, axis = 1)
+ #Need to look and see what they mean by nationwide, east coast states, and interstate
+
+
 
