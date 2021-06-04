@@ -1,0 +1,364 @@
+\documentclass[reqno,11pt]{amsart}
+\usepackage{amsmath, amsfonts, amsthm, amssymb, setspace, textcomp, enumerate, bbm, multirow, 
+parskip, graphicx, pdfpages}
+\usepackage{geometry}
+%\usepackage[showframe]{geometry}
+\geometry{hmargin={1in},vmargin={1in}}
+
+\usepackage[hyphens]{url}
+\usepackage{hyperref}
+\hypersetup{breaklinks=true}
+
+\pagestyle{plain}
+
+
+
+\allowdisplaybreaks
+\title{An analysis of US work stoppages and employee wages}
+
+\author[N. Cornelius]{Nyssa Cornelius}
+\email{nyssa.cornelius@du.edu}
+
+\author[C. Jennings-Shaffer]{Chris  Jennings-Shaffer}
+\email{christopher.jennings-shaffer@du.edu}
+
+
+\begin{document}
+\allowdisplaybreaks
+\maketitle
+
+
+
+\section{Introduction}
+
+The GitHub repository for this project is located at
+\url{https://github.com/NyssaCornelius/FProj}. The Binder link for this project
+is \href{https://mybinder.org/v2/gh/NyssaCornelius/FProj/1d4a1dfcafdd4295908e81187a725c6250760315}{Binder link}.
+
+
+
+The data sets are taken from the U.S. Bureau of Labor statistics (\url{https://www.bls.gov/}). 
+For work stoppages, we used the excel file at \url{https://www.bls.gov/web/wkstp/monthly-listing.xlsx}.
+This file contains information on each work stoppage in the US from 1993 on that involved at
+least 1000 workers. Information about the columns is given in the following table
+(all columns are stored as text).
+
+\begin{tabular}{ccl}
+column & basic type & description
+\\\hline
+Organizations involved 
+	& 
+	nominal
+	&
+	$\substack{\displaystyle\text{The company or branch of government where the}
+	\\\displaystyle\text{work stoppage occurred.}}$
+\\
+States
+	&
+	nominal
+	&
+	The states where the work stoppage occurred.
+\\
+Areas
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{The geographic areas where the work stoppage }
+	\\\displaystyle\text{occurred.}}$
+\\
+Ownership
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{This is either private industry (private sector) or}
+	\\\displaystyle\text{state/local government (public sector).}}$
+\\
+Industry code	
+	&
+	numerical
+	&
+	$\substack{\displaystyle\text{The 2017 NAICS code describing the industry}
+	\\\displaystyle\text{associated to the work stoppage.}}$
+\\
+Union	
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{The name of the union associated with the work} 
+	\\\displaystyle\text{stoppage.}}$
+\\
+Union acronym	
+	&
+	nominal
+	&
+	The acronym for the union.
+\\
+Union Local	
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{A number or word description of the local union}
+	\\\displaystyle\text{associated with the work stoppage.}}$
+\\
+Bargaining unit	
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{A description of the bargaining unit for}
+	\\\displaystyle\text{the work stoppage (usually empty).}}$
+\\
+Work stoppage beginning date	
+	&
+	ordinal
+	&
+	Start date of the work stoppage.	
+\\
+Work stoppage ending date	
+	&
+	ordinal
+	&
+	End date of the work stoppage.	
+\\	
+Number of workers
+	&
+	numerical
+	&
+	$\substack{\displaystyle\text{The number of workers involved in the work}
+	\\\displaystyle\text{stoppage.}}$
+\\
+$\substack{\displaystyle\text{Days idle cumulative}\\\displaystyle\text{for this work stoppage}}$
+	&
+	numerical
+	&
+	The total duration of the work stoppage.
+\\
+Note
+	&
+	nominal
+	&
+	$\substack{\displaystyle\text{Any notes about the work stoppage (e.g., the}
+	\\\displaystyle\text{union changed names or the number of workers}
+	\\\displaystyle\text{involved changed during the work stoppage).}}$
+\end{tabular}
+
+
+Employment statistics at the national level are taken from 
+\url{https://download.bls.gov/pub/time.series/ce/},
+specifically from 
+\href{https://download.bls.gov/pub/time.series/ce/ce.industry}{ce.industry},
+\href{https://download.bls.gov/pub/time.series/ce/ce.series}{ce.series},
+and
+\href{https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries}{ce.data.0.AllCESSeries}
+Since a full description of these data sets are given in 
+\href{https://download.bls.gov/pub/time.series/ce/ce.txt}{ce.txt}, 
+let us be a bit brief in the description. 
+The file ce.series contains an entry for each type of data stored
+at the national level (for example:
+``Average hourly earnings of all employees, stone mining and quarrying, seasonally adjusted''),
+whereas the actual data values for this are stored in 
+ce.series; they are joined on the column series\_id (e.g., CES1021231003).
+The file ce.series also contains a column for industry\_code, which is matched
+to the description of the industry code in ce.industry. In ce.industry, there is
+partial information to match an industry code of ce.series with an NAICS industry code of
+work stoppage data. This is discussed in greater detail in Section 3.
+
+
+Similarly, employment statistics at the state level are taken from 
+\url{https://download.bls.gov/pub/time.series/sa/},
+specifically
+\href{https://download.bls.gov/pub/time.series/sa/sa.series}{sa.series},
+\href{https://download.bls.gov/pub/time.series/sa/sa.data.0.Current}{sa.data.0.Current},
+\href{https://download.bls.gov/pub/time.series/sa/sa.industry}{sa.industry},
+and
+\href{https://download.bls.gov/pub/time.series/sa/sa.state}{sa.state},
+with a detailed description of the data sets given in
+\href{https://download.bls.gov/pub/time.series/sa/sa.txt}{sa.txt}.
+The file sa.series contains an entry for each type of data stored
+at the state level and the actual data for the entries are stored in 
+sa.data.0.Current, again joining on the column series\_id.
+We use sa.state to decode the state for a series from numeric to string.
+However, this time sa.industry does contain even partial information to 
+match industry codes, but it does at least give an English description
+of the codes. This is also discussed in greater detail in Section 3.
+
+
+[...still need to add explanation for min wage data used in chloropleths ...]
+
+
+The choice of using these data sets is that they contained the greatest
+amount of information we could locate. Upon reviewing the literature,
+they are the standard sets to use (and have been for a long time).
+To load in the data, we downloaded the text files and then imported them
+into Pandas dataframes in our jupyter notebook. The question we ask and
+answer in this project is the following. With the major economic and political
+changes of the last few decades, do strikes still have a negative correlation
+with income inequality? Specifically, do strikes correlate with an increase
+in wages of the associated workers? How do geographical regions affect
+the frequency of strikes? Does the minimum wage play a role in the frequency
+of strikes? The inputs for this project are the
+data sets described above, the outputs are the data visualizations and 
+conclusions that we draw below.
+
+
+The remainder of this report is as follows. In section 2 we briefly discuss 
+some of the existing literature (both research and non-research articles) on 
+the subject, which will put our project in perspective of the larger picture.
+In section 3 we go over the data cleaning necessary for our project and the 
+challenges that this presented. In section 4 we both describe how we visualized
+the data as well as give some of the most relevant visualizations. We conclude
+this report in section 5, where we make our concluding remarks.
+
+
+\section{Literature Review}
+
+Articles discussing work stoppages are almost exclusively about strikes 
+(as shut outs initiated by management are very rare in comparison) and 
+usually focus on union representation of the work force. While this last part is usually true, it
+is not universally so, as seen in \cite{Rubin} where the author argues that 
+strikes and unions do not go together in terms of correlation with employee
+wages and wealth inequality. In particular, they make the case that 
+union representation decreases income inequality among specific groups but 
+increases overall inequality, whereas strikes decrease overall income inequality 
+(e.g. union representation may reduce income inequality among low and middle 
+income white families while increasing income inequality between black and white
+families, whereas strikes reduce income inequality at the aggregate level). 
+That being said, this article is an outlier in this respect and considers
+data only from 1949 to 1976. In the rest of our analysis, we take the more 
+common approach of grouping unions and strikes together.
+
+We will not spend much time on non-research literature, as for this subject it 
+tends to be very clearly biased. However, we do note that while opinions
+that are pro-union and pro-strike do sometimes cite relevant statistics,
+this is far less the case with the opposing side. The latter is largely relegated 
+to opinion pieces in local newspapers and blogs (and so we do not include 
+references to them). While the pro-labor side also appears in similar sources
+(which we also omit), non-research literature also comes out of think tanks such as
+Economic Policy Institute and Washington Center for Equitable Growth.
+These articles are more likely to back up their claims with data
+and references (although they are often self-citing).
+For example, in \cite{Misc1a} the author makes the case that strikes 
+have and still do empower workers and reduce economic inequality. The article
+discusses some of the political history surrounding unions and strikes 
+in US, such when unions suffered a serious blow in 1981 when then President
+Ronald Reagan fired 11,000 air traffic controllers for striking for higher pay
+and reduced hours; describes summaries of polls on what workers do and do not
+like about unions and strikes \cite{Misc1d}; and gives specific examples
+of recent strikes that have and have not paid off for workers \cite{Misc1e}.
+While not statistical data, the article also describes
+some of the current anti-union practices of major corporations 
+(see \cite{Misc1b}). Similarly, while the opinions in 
+\cite{Misc3, Misc2} are not always backed by hard data, there the authors
+do correctly point out trends in the number of strikes and issues
+with the main source of data for work stoppages. The main source of
+data for US work stoppages is the U.S. Bureau of Labor Statistics
+(and this has been the case for over a century) and one issue
+with the data is that it only includes work stoppages that involve at least 
+1000 workers. As the authors point out, according to the Bureau of Labor
+Statistics, nearly 60\% of workers in the private sector are employed
+by companies with fewer than 1000 workers. Additional issues with this
+data set are regularly brought up in research articles.
+
+There are of course think tanks that are not pro-union, but their
+arguments avoid statistics of economic inequality and the historical
+correlation with unions and strikes. One example
+of this is \cite{Misc4} from the Hoover Institution on War, Revolution, 
+and Peace. Here the author argues against unions with pro-capitalism claims
+of free trade and competition benefiting the worker. For statistics, 
+the author instead looks to the overall performance of the US economy and unemployment levels
+\cite{Misc4a, Misc4b, Misc4c}.
+Another approach, as seen in \cite{Misc5} is to examine economic
+inequality in terms of skilled labor and education of the workforce.
+However, the authors of \cite{Misc1c} make the claim that the data and analysis in \cite{Misc1ci} 
+shows that the levels of training and education do not adequately explain
+include inequality. However, our project is not investigating statistics
+about these other sources.
+
+In terms of research articles, strikes and unions are studied in many
+different respects. Lighter on the numbers are studies on public opinion
+and ethical issues. In \cite{BurtonCrider} the authors give a lengthy account
+of the opinions for and against the legality of strikes in the public sector strikes. 
+Generally speaking, most people at the time of the article accepted that private sector 
+employees should be able to strike, but were divided when it came to the the public sector.
+Claims against public sector strikes are based on public sector work being essential, 
+that the cost of increasing the collective bargaining power of public sector workers is higher
+and with lower returns than in the private sector, and that public sector strikes are inappropriate 
+because they may affect public policy. Also there is the dubious claim (which is disputed by the
+authors \cite{BurtonCrider}) that low pay in the public sector, such as for teachers, is due to
+public opinion on the importance of the service, whereas low pay in the private sector reflects 
+a misallocation of resources. Ultimately the authors take the stance that strikes should be 
+legal for areas of the public sector that would not lead to immediate public danger 
+(e.g., fire fighters should not have the option to strike as part of their collective bargaining).
+Related to the issue of public sector strikes, \cite{ThompsonSalmon} examines the ethical
+issue of medical workers being able to strike, which is assumed to be an issue of major
+importance as doctors move away from autonomous positions to the employee-employer
+model common to modern health care. Another common topic about the public sector
+is teacher strikes. By examining one specific case study, the authors of \cite{BelotWebbink}
+draw the unsurprising conclusion that long term teacher strikes have long term (decades long) negative
+affects on students, but enter the political realm by implying this should be used as
+a talking point against the legality of teacher strikes. 
+In \cite{HertelFernandezNaiduReich} the authors examine public opinion polls
+about teacher strikes and education unions, and make the claim that public opinion
+is generally pro-labor, with first hand knowledge of the strike greatly increasing
+this (i.e., parents are more likely to side with their children's teachers than
+to blame the teachers for the strike).
+
+
+Taking statistics in mind, there are a large number of articles attempting
+to study and model the occurrence of strikes \cite{Kennan, Kennan2, Mauro, Naples}, 
+usually based on strikes appearing in waves over time. While present 
+in articles over a century old \cite{Cross},
+there has been an increased interest in
+how relevant the recorded data actually is and how appropriately it is being
+analyzed. For example,
+in \cite{PalombaPalomba} it is pointed out that the data
+from the Bureau of Labor statistics records the
+the number of days of the work stoppage and the number of people involved,
+but this does not properly measure the actual cost of the strike. The authors
+attempt to correct this by examining the work force involved in each strike
+and weighting the strike with a cost associated to the particular type of work.
+Related to the issue of actual economic cost, the authors of \cite{Mchugh}
+attempt to measure the impact of a strike based not just on the individual firm, 
+but also on the cost to associated businesses.
+The authors of \cite{SchorBowles} suggest that the the variance in strikes is better explained 
+by the cost of losing a job than the unemployment rate, which is commonly used.
+For the modern era, it is suggested in \cite{MartinDixon} that unions should be
+studied separately for institutionalized unions and social movement unions,
+whereas the authors of \cite{KeeranTarpinian} think that the old models
+and explanations are no longer relevant to due to changes in business practices and public policy
+stemming from technology and globalization. There is also the claim,
+as seen in \cite{WallaceLeichtRaffalovich}, that strikes and unions are now irrelevant
+to income inequality.
+
+
+The point to take from this is that historically it has been widely accepted that
+union representation and strikes correlate with improved conditions for the labor force. It is
+also accepted that in recent decades, union representation and the number of strikes 
+have significantly declined. This is attributed to the change in power held
+by companies due to technology, globalization, and political power. In 2018 and 
+2019 there was a sudden and major uptick in strikes, but like most things this
+slowed in 2020 due to covid-19. Our research
+is to verify that despite this loss in power of the labor force, strikes do indeed
+still correlate with positive gains, as this should be verified and not be taken for granted.
+[...To be changed, if our data doesn't show that...]
+
+
+
+\section{Data Cleaning}
+...
+
+\section{Visualizations}
+...
+
+\section{Conclusions}
+...
+
+
+
+
+
+\bibliographystyle{alphadin}
+\bibliography{reportRef}
+
+
+
+\end{document}
