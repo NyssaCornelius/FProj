@@ -344,13 +344,194 @@ still correlate with positive gains, as this should be verified and not be taken
 
 
 \section{Data Cleaning}
-...
+
+First we detail the basic data cleaning and type conversion done when importing the
+data sets. As mentioned earlier, all of the data is initially stored in plain text format.
+For the work stoppage data, the columns of interest are the states, industry code,
+work stoppage beginning date, and work stoppage ending date. We specify that industry code
+is an int, states is a string and that missing values should be the empty string,
+and otherwise we leave everything up to pandas. The national level data comes 
+from ce.industry, ce.series, and ce.data.0.AllCESSeries.
+For ce.industry, we load this csv file directly with pandas with tab as the column separator.
+For ce.series, there are some issues with white space as the separator
+when loading this file directly with pandas, because of this we specify the column names 
+explicitly and use the string strip method as a converter on the series\_id column.
+Because ce.series contains a large amount of data not relevant to this project, we
+restrict to entries corresponding for weekly earnings of employees (data\_type\_code 11)
+and use the seasonally adjusted data (season `S'). The data in 
+ce.data.0.AllCESSeries has the same white space issue as ce.series and we handle it in the same way.
+The state level data comes from sa.series, sa.data.0.Current, sa.states, and sa.industry.
+The data in sa.series is white space delimited and this is handled properly by pandas.
+We restrict to entries for average weekly earnings (data\_type\_code 4).
+The data in sa.data.0.Current is white space delimited and this is handled properly by pandas.
+As sa.state is a short file, we record the information as a dictionary and do so by hand
+since this file translates an integer state code to the full state name, but the work
+stoppage data records states as their abbreviations. The file sa.industry is not loaded
+in the notebook and is instead something we use for data cleaning done by hand, which
+we discuss below. Despite the similar information being stored at the national and 
+state level and the similar naming conventions, the actual data follows different conventions. 
+
+[...to add description of minimum wage data...]
+
+
+For this project, missing data usually means that it is either completely unavailable
+or difficult to find. We do not encounter missing data due to bad or missing readings
+where we could try to fill in based on nearby data. To explain the ways this can happen, 
+we separately discuss data at the national level and data at the state level.
+
+At the national level we want to join the work stoppage data with the national data
+based on industry and then look up wage data for that industry around the time of
+the work stoppage. This leads to missing data in three consecutive stages.
+The work stoppage data uses NAICS codes and the national data uses
+something not well documented. The file ce.industry provides partial information
+to match these codes, with a ce industry code having none or more associated 
+NAICS codes. At least for the subset corresponding to our data, an NAICS code is matched
+with at most one ce industry code. This process leaves a little over 100 unmatched 
+NAICS codes in the work stoppage data that can still be match with ce industry codes.
+This additional matching is done by hand for two reasons. The first is it is a small
+enough number to easily do by hand and can be done by looking at the description
+of the NAICS codes and the description of the ce industry code.
+For example, the NAICS code 721110 is for 
+``Hotels (except Casino Hotels) and Motels''
+and the ce industry code 70721110 is for 
+``Hotels and motels, except casino hotels'', but the ce\_industry
+file only matches 70721110 with the NAICS code 72111
+(which is another valid NAICS code for  ``Hotels (except Casino Hotels) and Motels'').
+This example might suggest that the NAICS codes are embedded as substrings
+of the ce industry codes, but this is often not the case. 
+The ce industry code 31327390 matches the NAICS codes	
+32731, 32733, and 32739, of which only one is a substring;
+the ce industry code 20000000 matches the NAICS code 23, which is not a substring
+of 20000000 but is a substring of a large number of ce industry codes.
+An NLP approach would yield matches, but it is very questionable that these
+would be accurate matches.
+If the process used to construct the ce industry codes was not a black box,
+then a programmatic approach would very likely work.
+
+Once the industry code for a work stoppage is matched
+(either via ce\_industry or by hand), there are two additional issues.
+A valid ce industry code may not have any associated ce series entries
+(i.e., the Bureau of Labor Statistics records that industry code, but 
+tracks no wage data at the national level for that industry).
+Once the ce industry code is matched to a ce series, we can check
+for data on the ce series in ce.data.0.AllCESSeries.
+Often there is no data for the ce series around the time of the
+work stoppage. We detect this by using the work stoppage begin and end dates,
+the AllCESSeries year and period columns (period is basically month), and 
+doing calculations with time deltas. For this project, we require
+wage data six months before the work stoppage began (the six months is set in a 
+variable that can be changed to whatever time delta we want).
+Generally speaking, once wage data is collected for a ce series, it
+is collected in the future. This means we run into missing wage data for a work
+stoppage in that BLS did not yet record any data, 
+but we do not encounter missing wage data where only a select number of
+months are missing (i.e., something we could try to fill in).
+For work stoppages that get past these three issues of missing data, the 
+wage data is generally clean and we have valid time series to analyze.
+
+
+In terms of information, missing values at the state level are similar
+to that at the national level, but are rather different in terms of data.
+The main difficulty is that sa.industry does not give any matches of
+sa industry codes with NAICS codes. Although the documentation in
+sa.txt says that the sa industry codes are SIC codes, this is simply
+not the case. To make this clear, SIC codes are four digits but
+sa industry codes are six digits. As a specific example,
+``Bituminous Coal And Lignite Mining'' is sa industry code 112203,	
+NAICS code 212111, and SIC code 1221.
+The reason this is so disappointing is that there are well established
+crosswalks for NAICS and SIC codes
+(\url{https://www.naics.com/wp-content/uploads/2014/10/NAICS-to-SIC-Crosswalk.pdf}).
+We match NAICS codes with sa industry codes by hand based on the descriptions.
+If the construction of sa industry codes was not a black box,
+then a programmatic approach would likely work.
+Once a work stoppage is matched to an sa industry code, there
+are the same issues with the national level data. That is to say, 
+an sa industry code may not have any associated sa series entries and
+an sa industry code that matches an sa series entry may not have data
+around the time of the work stoppage. As additional issue with missing data
+is that an sa industry code may have an associated sa series entry
+with wage data, but not in the state of the work stoppage (i.e., the 
+Bureau of Labor Statistics recording data for an industry in one state
+does not mean they collect data for that industry in all states).
+For work stoppages that get past these missing value issues, we generally have
+clean time series data.
+
+The process of connecting a work stoppage with wage data requires quite of bit of feature engineering
+and calculations as discussed above. Additional
+feature engineering and statistical summaries comes directly after this.
+For a give work stoppage, we have national level wage data as a time series and
+state level wage data as a time series. With this we compute the data for the
+visualizations discussed in the next section. 
+
+
+
 
 \section{Visualizations}
 ...
 
 \section{Conclusions}
-...
+
+...How did this project show us the information?...
+
+
+...Did this give the results we wanted?...
+
+
+...Future research...
+
+In terms of future research, there are several obvious directions based on 
+additional available data and
+the 
+granularity of the data. These are in line with ideas mentioned in the existing literature.
+The work stoppage data includes information about the 
+number of workers and the duration of the work stoppage,
+so we could analyze how these numbers impact the benefits to the striking 
+workers. We matched NAICS industry codes with industry codes from the 
+BLS data, so we could group similar industries (both on the work stoppage side
+of the data and on the BLS side) to look for patterns there.
+Related to the previous two ideas, we could try to account for the
+cost of that type of labor. Since we have information on the unions 
+associated with the work stoppages, we could also look for patterns 
+when grouping them by private versus public sector and also by
+institutional versus social movement unions. 
+We used data at the national and state level, there is similar data
+available for metro areas (\url{https://download.bls.gov/pub/time.series/sm/})
+that we could also analyze. This would require matching industry codes
+similar to the state level data. Our analysis considered wage data,
+but there is other relevant employment data such as 
+employee injuries and illness
+(\url{https://download.bls.gov/pub/time.series/cd},
+\href{https://download.bls.gov/pub/time.series/cf}{CF},
+\href{https://download.bls.gov/pub/time.series/ch}{CH},
+\href{https://download.bls.gov/pub/time.series/fi}{FI},
+\href{https://download.bls.gov/pub/time.series/fw}{FW},
+\href{https://download.bls.gov/pub/time.series/hc}{HC},
+\href{https://download.bls.gov/pub/time.series/hs}{HS},    
+\href{https://download.bls.gov/pub/time.series/ii}{II},
+\href{https://download.bls.gov/pub/time.series/sh}{SH},
+\href{https://download.bls.gov/pub/time.series/si}{SI}),
+employee benefits
+(\href{https://download.bls.gov/pub/time.series/eb}{EB}),
+unemployment and job openings
+(\href{https://download.bls.gov/pub/time.series/jl}{JL},
+\href{https://download.bls.gov/pub/time.series/jt}{JT},
+\href{https://download.bls.gov/pub/time.series/la}{LA}),
+and various costs to the employer
+(\href{https://download.bls.gov/pub/time.series/cc}{CC},
+\href{https://download.bls.gov/pub/time.series/ci}{CI}).
+While there is a wealth of data available, each individual data set
+may require us to match industry codes, which is a time consuming
+process, especially since we cannot even trust the documentation of
+these data sets.
+
+
+
+
+
+
+
+
 
 
 
