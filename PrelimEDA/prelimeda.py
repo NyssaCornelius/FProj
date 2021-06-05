@@ -10,8 +10,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
-import plotly
-import xlrd
+import plotly.express as px
 
 clean_national_data = pd.read_pickle(".\\Cleaned\\clean_national_data.pkl")
 clean_state_data = pd.read_pickle(".\\Cleaned\\clean_state_data.pkl")
@@ -84,7 +83,7 @@ us_state_abbrev = {'Alabama': 'AL', 'Alaska': 'AK',
 minwagestate['StateCode'] = minwagestate['State'].map(us_state_abbrev)                                                             
 
     #Work stoppage:
-work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle', 'Industry code[1]': 'IndustryCode'})
+work_stop = work_stop.rename(columns={'Days idle, cumulative for this work stoppage[3]': 'TotalDaysIdle', 'Industry code[1]': 'IndustryCode', 'Work stoppage beginning date': 'StartDate', 'Work stoppage ending date': 'EndDate'})
 
 #Remove the weird [4] and make the column an integer data type:
 # work_stop = work_stop.replace('[4]', np.NaN) #NOT NEEDED
@@ -92,11 +91,11 @@ work_stop['TotalDaysIdle'] = pd.to_numeric(work_stop['TotalDaysIdle'], errors='c
 work_stop['TotalDaysIdle'] = work_stop['TotalDaysIdle'].astype('Int64')
 
 #Fix workstop end date:
-work_stop['Work stoppage ending date'] = pd.to_datetime(work_stop['Work stoppage ending date'], errors='coerce', format = '%Y-%m-%d')
+work_stop['EndDate'] = pd.to_datetime(work_stop['EndDate'], errors='coerce', format = '%Y-%m-%d')
 
 #Column for duration of work stoppage:
     #Represents number of days
-work_stop['WSDuration'] = (work_stop['Work stoppage ending date'] - work_stop['Work stoppage beginning date'])/np.timedelta64(1,'D')+1
+work_stop['WSDuration'] = (work_stop['EndDate'] - work_stop['StartDate'])/np.timedelta64(1,'D')+1
 # work_stop['WSDuration'] = work_stop['WSDuration']+1
 
 #Change states from string to list of strings:
@@ -174,7 +173,7 @@ work_stop['iTitle'] = work_stop['iTitle'].replace({k:v for k, v in zip(iCodes['N
 
 
 #Industry strikes aggregated by count:
-work_stop['iTitle'].value_counts()
+industryCounts = work_stop['iTitle'].value_counts().reset_index().rename({'index': 'Industry', 'iTitle': 'Counts'}, axis = 1)
 
 #Frequency of strikes by state:
 otherStates = {k:'Other' for k in ['East Coast States', 'Nationwide', 'Interstate']}
@@ -182,5 +181,8 @@ stateCounts = pd.Series(np.concatenate(work_stop['States'])).str.strip().replace
 stateCounts = pd.Series(np.where(stateCounts == "", None, stateCounts)).value_counts().reset_index().rename({'index': 'State', 0: 'Counts'}, axis = 1)
  #Need to look and see what they mean by nationwide, east coast states, and interstate
 
+#Last to do is find any significance for above data
+#Next is to match up sm data from BLS (should be open)
+#Will also need to graph, then Sunday write report on visualizations
 
 
