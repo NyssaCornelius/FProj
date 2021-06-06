@@ -186,3 +186,116 @@ stateCounts = pd.Series(np.where(stateCounts == "", None, stateCounts)).value_co
 #Will also need to graph, then Sunday write report on visualizations
 
 
+#Begin State-Metro Employment and Wage Data work:
+smdata = pd.read_csv('https://download.bls.gov/pub/time.series/sm/sm.data.1.AllData', sep = '\t')
+
+smdata.shape
+smdata.columns
+
+#Remove whitespace:
+smdata.columns = smdata.columns.str.strip()
+smdata['series_id'] = smdata['series_id'].str.strip()
+smdata['value'] = smdata.value.astype(str).str.strip()
+# smdata['value'] = smdata['value'].str.strip()
+
+
+# smdata = smdata.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
+
+#Convert value to float
+
+# smdata['value'] = smdata['value'].astype(float)
+
+len(smdata.series_id.unique())
+
+smdata['state_code'] = smdata['series_id'].str.extract(r'(\d{2})')
+smdata = smdata.loc[~smdata['state_code'].isin(['00','11','72','78','99'])]
+
+
+smdata.isnull().sum()
+smdata.dtypes
+
+
+# smdata.loc[smdata['value'].isnull()].head()
+
+#Create columns for data types in series id:
+smdata['data_type'] = smdata['series_id'].str.extract(r'(\d{2}$)')
+smdata.head(20)
+
+data_types = {'01': 'Employees',
+              '11': 'AvgWeeklyEarnings'
+              }
+
+smdata = smdata.loc[smdata['data_type'].isin(data_types.keys())]
+smdata['data_type'] = smdata['data_type'].replace(data_types)
+smdata['value'] = np.where(smdata['value'] == '-', np.nan, smdata['value'])
+smdata['value'] = smdata['value'].astype(float)
+
+# bama = smdata.loc[(smdata['stateID'] == '06')&(smdata['data_type'] == 'Employees')].copy()
+
+smdata['industry_code'] = smdata['series_id'].str.extract(r'\d{7}(\d{5})')+'000'
+
+
+indCode = pd.read_csv('https://download.bls.gov/pub/time.series/sm/sm.industry', sep = '\t', dtype = {'industry_code': str})
+
+mergedat = pd.merge(smdata, indCode, on = 'industry_code', how = 'left')
+
+mergedat.loc[mergedat['industry_code'] != '00000000']
+mergedat.loc[mergedat['industry_code'] == '90930000']
+
+
+manInd = ['Utilities', 'Transportation and Warehousing', 'Professional, Scientific, and Technical Services',
+          'State Government', 'Indian Tribes', 'Logging', 'Educational Services', 'Federal Government',
+          'Federal Government', 'Federal Government', 'Local Government']
+manIndreplace = {k:v for k,v in zip(mergedat.loc[mergedat['industry_name'].isnull(), 'industry_code'].unique(), manInd)}
+
+mergedat.industry_code.replace(manIndreplace, inplace = True)
+mergedat.loc[mergedat['industry_name'].isnull(), 'industry_name'] = mergedat.loc[mergedat['industry_name'].isnull(), 'industry_code']
+
+stateCodes = pd.read_csv('https://download.bls.gov/pub/time.series/sm/sm.state', sep = '\t', dtype = {'state_code': str})
+
+final_data = pd.merge(mergedat, stateCodes, on = 'state_code', how = 'left')
+
+final_data.isnull().sum()
+final_data.state_name.value_counts()
+
+final_data.drop(['series_id', 'period', 'footnote_codes', 'state_code', 'industry_code'], axis = 1, inplace = True)
+
+#Make pivot table
+finalfull = final_data.pivot_table(index = ['state_name','industry_name','year'], columns = 'data_type', values = 'value', aggfunc = 'mean').reset_index()
+finalfull.columns = finalfull.columns.str.strip()
+final_earnings = finalfull.copy()
+final_earnings = final_earnings.dropna().reset_index()
+final_earnings = final_earnings.drop(labels = 'index', axis = 1)
+
+final_earnings['StateCode'] = final_earnings['state_name'].map(us_state_abbrev)
+finalfull['StateCode'] = finalfull['state_name'].map(us_state_abbrev)
+
+# work_stop.to_pickle(".\\PrelimEDA\\work_stop.pkl")
+# finalfull.to_pickle(".\\PrelimEDA\\finalfull.pkl")
+# final_earnings.to_pickle(".\\PrelimEDA\\final_earnings.pkl")
+# minwagestate.to_pickle(".\\PrelimEDA\\minwagestate.pkl")
+
+# final_earnings.industry_name.value_counts()
+
+# finalfull.to_csv('finalfull.csv', index = False)
+# final_earnings.to_csv('final_earnings.csv', index = False)
+
+#Need to group by industry and state, respectively and take the average over all years since 2007
+earnInd = final_earnings.groupby(['industry_name'])['AvgWeeklyEarnings'].mean().sort_values(ascending = False)
+earnInd = earnInd.reset_index()
+
+earnState = final_earnings.groupby(['StateCode'])['AvgWeeklyEarnings'].mean().sort_values(ascending = False)
+earnState = earnState.reset_index()
+
+#Education and Health services have two of the highest rates of strike - in mid point of average weekly earnings
+#However, this could be skewed by professionals in health industry that make a great deal more
+#Can't know from this data
+#Leisure is lowest average weekly earnings
+
+#This data is depressing!!!
+
+
+#Next is some significance testing, then we're done!!
+
+
+
