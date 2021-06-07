@@ -287,7 +287,7 @@ earnInd = earnInd.reset_index()
 earnState = final_earnings.groupby(['StateCode'])['AvgWeeklyEarnings'].mean().sort_values(ascending = False)
 earnState = earnState.reset_index()
 
-#Education and Health services have two of the highest rates of strike - in mid point of average weekly earnings
+#Education and Health services have two of the highest rates of strike - in mid-low range of average weekly earnings
 #However, this could be skewed by professionals in health industry that make a great deal more
 #Can't know from this data
 #Leisure is lowest average weekly earnings
@@ -296,6 +296,27 @@ earnState = earnState.reset_index()
 
 
 #Next is some significance testing, then we're done!!
+
+#Do the states with more strikes really have higher minimum wage?
+#Higher average weekly earnings? Even considering the difference in number of employees?
+#Do the states with higher minimum wages truly have significantly higher minimum wages?
+#z-test? How would we figure out directionality?
+#Or maybe is there a correlation with number of strikes and minimum wage
+#Correlation between industry and average weekly earnings?
+#That seems obvious though, maybe not worth looking into
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
