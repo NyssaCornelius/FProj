@@ -408,6 +408,6 @@ print(m_comp_strikes.summary())
 #could still be due to chance
 
 
-
+#Add in information for minimum wage data
 
 

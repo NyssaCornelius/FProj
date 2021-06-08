@@ -1,23 +1,3 @@
-supersector_code	supersector_name
-00	Total Nonfarm
-05	Total Private
-06	Goods Producing
-07	Service-Providing
-08	Private Service Providing
-10	Mining and Logging
-15	Mining, Logging, and Construction
-20	Construction
-30	Manufacturing
-31	Durable Goods
-32	Non-Durable Goods
-40	Trade, Transportation, and Utilities
-41	Wholesale Trade
-42	Retail Trade
-43	Transportation and Utilities
-50	Information
-55	Financial Activities
-60	Professional and Business Services
-65	Education and Health Services
-70	Leisure and Hospitality
-80	Other Services
-90	Government
+version https://git-lfs.github.com/spec/v1
+oid sha256:b5b2c911026606e401458bc3ec960ebda32878eb3976908b3475204470df96b6
+size 566

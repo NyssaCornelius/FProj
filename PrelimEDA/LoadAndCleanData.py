@@ -57,7 +57,7 @@ industry_lookup_df = pd.read_csv("ce.industry", sep="\t")
 #This text file contains info about each series_id.
 #We use it to turn a BLS industry code into a Current Employment Statistic series_id.
 #This file is orginally from https://download.bls.gov/pub/time.series/ce/ce.series
-current_employment_series_df = pd.read_csv("ce.series.txt", sep="\t", header=0,
+current_employment_series_df = pd.read_csv("/Users/nyssacornelius/Desktop/COMP4477/FProj/FProj/CurrentEmploymentStats/ce.series.txt", sep="\t", header=0,
     names=['series_id', 'supersector_code', 'industry_code',
        'data_type_code', 'seasonal', 'series_title', 'footnote_codes',
        'begin_year', 'begin_period', 'end_year', 'end_period'],
@@ -76,7 +76,7 @@ current_employment_series_df = current_employment_series_df[
 #This text file contains the value for the each Current Employment Statistic.
 #This data set is from 1939 to 2021, but not for all series. It is very spotty.
 #This file is originally from https://download.bls.gov/pub/time.series/ce/ce.data.0.AllCESSeries
-current_employment_statistic_df = pd.read_csv("ce.data.0.AllCESSeries", 
+current_employment_statistic_df = pd.read_csv("/Users/nyssacornelius/Desktop/COMP4477/FProj/FProj/CurrentEmploymentStats/ce.data.0.AllCESSeries.txt", 
     sep="\t", header=0, 
     names=['series_id', 'year', 'period', 'value','footnote_codes'],
     converters={'series_id':str.strip} )
@@ -109,7 +109,7 @@ state_series_df = state_series_df[ (state_series_df["data_type_code"]==4) ]
 
 
 #This text file contains the actual data for a given series.
-states_metro_employment_stats = pd.read_csv("sa.data.0.Current.csv", sep="\s+")
+states_metro_employment_stats = pd.read_csv("/Users/nyssacornelius/Desktop/COMP4477/FProj/FProj/StateMetroEmployment/sa.data.0.Current.csv", sep="\s+")
 #This uses SIC code for industry, or so they say. It doesn't look to match the actual SIC codes.
 #This isn't currently in use, because of matching the data with the work stoppage data.
 
