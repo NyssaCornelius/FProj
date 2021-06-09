@@ -33,8 +33,9 @@ parskip, graphicx, pdfpages}
 
 The GitHub repository for this project is located at
 \url{https://github.com/NyssaCornelius/FProj}. The Binder link for this project
-is \href{https://mybinder.org/v2/gh/NyssaCornelius/FProj/1d4a1dfcafdd4295908e81187a725c6250760315}{Binder link}.
-
+is \href{https://mybinder.org/v2/gh/NyssaCornelius/FProj/main}{Binder link}.
+The main Jupyter Notebook for our project is FinalNotebook.ipynb. This file is available
+on github and is also uploaded to the 2DU platform with this report.
 
 
 The data sets are taken from the U.S. Bureau of Labor statistics (\url{https://www.bls.gov/}). 
@@ -182,7 +183,43 @@ match industry codes, but it does at least give an English description
 of the codes. This is also discussed in greater detail in Section 3.
 
 
-[...still need to add explanation for min wage data used in chloropleths ...]
+
+The minimum wage data set is an amalgamation of data pulled from two locations, 
+the first being the original location of the data set: 
+\href{https://www.dol.gov/agencies/whd/minimum-wage}{Department of Labor Minimum Wage Data}, 
+the second being Kaggle: 
+\href{https://www.kaggle.com/lislejoem/us-minimum-wage-by-state-from-1968-to-2017}{DOL Minimum Wage Data Scraped and Cleaned}. 
+The original dataset, as observed with many of this project’s government datasets contains Unicode characters unrecognizable 
+to various python packages rendering a scrape of the html table more labor intensive than the Kaggle dataset of the same information. 
+The Kaggle dataset was a web scrape of the original U.S. Department of Labor table for historical minimum wages. 
+This Kaggle dataset was further cleaned for clarity of nomenclature and parsimony of data. Extraneous columns such as 
+Federal Minimum wage were removed as the Effective Minimum Wage and Wage in 2020 dollars were more informative. 
+This is because when a state minimum wage is below the federal minimum wage for any given year, the effective minimum 
+wage becomes the federal minimum wage. There were no states omitted from the data. The years of the data ranged from 
+1968 to 2020. The Effective Minimum Wage in 2020 Dollars column was kept as a point of reference in the visualizations 
+and the dataset so that a viewer of the data could more easily understand the value of the minimum wages at the time they were set.
+
+The last dataset used for this project was the State-Metro Employment and Wage Data (hereby referred to as smdata), 
+originally located 
+\href{https://download.bls.gov/pub/time.series/sm/sm.data.1.AllData}{here}
+within the U.S. Bureau of Labor Statistics site. This data was used in attempt to quantify average hourly wages by 
+industry. Unfortunately, further on in the analysis portion of this project, it became evident that the individuals 
+preparing the data were less than uniform in their choice, updating, and creation of the industry codes found between 
+this and our other datasets. For example, the industry codes used in smdata were a combination of the 2012 NAICS Codes 
+(other data used 2017 NAICS codes) and codes created by either the data preparers or someone within the organization. 
+The NAICS codes, traditionally, no longer than 6 digits, are written so that 2 digits are the largest industry grouping, 
+3 digits gets more granular in industry, and so on, until the 6-digit code, which is the highest level of specificity for 
+industry. However, for reasons undisclosed in the dataset, the preparers added a 2-digit ``supersector'' code on to the 
+original NAICS code classification, which oftentimes was redundant or overgeneralized two industry groupings into one. 
+Again, the true reasonings for this are not present in the documentation for the dataset. Best attempts were made to make 
+inferences from the overgeneralized groupings to the other datasets that did not have these ``supersector'' codes, but they
+ are not a 1-to-1 comparison by any means. There are also some local government industries included in the smdata that 
+ were not present in the 
+\href{https://www.census.gov/naics/?58967?yearbck=2012}{2012 NAICS Codes} or 
+\href{https://www.census.gov/naics/?58967?yearbck=2017}{2017 NAICS Codes}
+ and thus were excluded. 
+
+
 
 
 The choice of using these data sets is that they contained the greatest
@@ -339,7 +376,12 @@ by companies due to technology, globalization, and political power. In 2018 and
 slowed in 2020 due to covid-19. Our research
 is to verify that despite this loss in power of the labor force, strikes do indeed
 still correlate with positive gains, as this should be verified and not be taken for granted.
-[...To be changed, if our data doesn't show that...]
+What our research shows is while strikes do appear to correlate with an increase in wages,
+this increase is not enough to be considered statistically relevant. 
+Perhaps this is simply an issue with not having enough data, perhaps it is
+due to the affects of strikes being diluted in data of our massive economy,
+or perhaps strikes do not do as much as they once did.
+
 
 
 
@@ -371,7 +413,29 @@ in the notebook and is instead something we use for data cleaning done by hand, 
 we discuss below. Despite the similar information being stored at the national and 
 state level and the similar naming conventions, the actual data follows different conventions. 
 
-[...to add description of minimum wage data...]
+
+Minimum wage data was originally scraped from the Department of Labor (DOL) page for historical 
+state minimum wages, however, the data scraped from the html table proved too labor intensive 
+to clean and instead, a Kaggle dataset of the same data was pulled in and cleaned for extraneous 
+variables such as State Minimum Wage (and their 2020 equivalent column), uncleaned original 
+columns from the DOL table, and footnote columns. In addition, any data for the District of 
+Columbia or U.S. territories (such as, but not limited to, Guam) were excluded from the analysis 
+as not all datasets included values from these locations. A column for state abbreviation was also 
+created and mapped from a dictionary of U.S. state names to map the data on to the choropleth maps. 
+From the original dataset, titled minwagestate, several dataframes were created to classify states 
+as a state that historically defaulted to the federal minimum wage as their effective minimum wage, 
+due to the state minimum wage being lower than the federal minimum wage. States were organized into 
+two groups, GreaterMinWage or MinWage. GreaterMinWage signifies a state that historically has a 
+higher minimum wage than that set by the federal government. MinWage signifies a state that historically 
+adopts the bare minimum wage, i.e. the federal minimum wage. For each year and state within that year, 
+if the Effective Minimum Wage – Federal Minimum Wage = 0 the state would receive a 0 for that year, 
+otherwise, it would receive a 1 and it would be stored in the column MinWageStatus. Note, that the 
+number is never negative as the Federal Minimum Wage takes effect each year if it is higher than the 
+state minimum wage. Once all states had either a 1 or 0 in each year, the average was taken on
+ MinWageStatus grouped by State. From there, states were given a classification of GreaterMinWage if 
+ their average was greater than or equal to 0.40, otherwise the state was considered a MinWage state. 
+ There were 38 states considered ``MinWageState'' and 12 considered ``GreaterMinWage'' in total.
+
 
 
 For this project, missing data usually means that it is either completely unavailable
@@ -465,20 +529,80 @@ state level wage data as a time series. With this we compute the data for the
 visualizations discussed in the next section. 
 
 
-
-
 \section{Visualizations}
-...
+
+The visualizations given here can also be found in the jupyter notebook for the project.
+In particular, the choropleths may there be viewed as animations.
+While it perhaps most useful to compare the animations in the notebook 
+of the choropleths,
+let us look at a snap shots. Below we see the minimum wage per state in 1988
+followed by the strikes per state in 1988.
+
+\includegraphics[width=1\textwidth]{minwage88.png}
+
+\includegraphics[width=1\textwidth]{strikes88}
+
+
+
+
+Considering this statewide data, it is natural to ask exactly how do strikes distribute by state? 
+For that, we have the following.
+
+\includegraphics[width=1\textwidth]{strikesByState.png}
+
+Given that much of our data cleaning was based around industry code, we must ask ourselves
+how the strikes are distributed amongst the industries. This data is illustrated as follows.
+
+\includegraphics[width=1\textwidth]{strikesByIndustry.png}
+
+Continuing on, what are the wages for these industries? Of course, this is provided in
+the following chart.
+
+\includegraphics[width=1\textwidth]{industryWages.png}
+
+While these are only visualizations of the data, a more detailed analysis is given in
+Jupyter notebook,
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Conclusions}
 
-...How did this project show us the information?...
+From the visualizations of the previous section, we can see trends in the data.
+We should note that this project does not follow the model of taking in data and
+trying to predict future outcomes (but as noted in the literature review, this
+is a common approach with strike data), but instead we are trying to analyze the
+extent to which strikes still correlate to benefits to the labor force.
 
 
-...Did this give the results we wanted?...
 
 
-...Future research...
+
+
+Unfortunately we cannot definitely drawn conclusions from this project. This is mainly due to
+the problematic nature of the data. With the industry codes being improperly documented
+in the the BLS data, it is unclear to what extent we are getting all the relevant data that
+we want to consider. While it is true that our project shows that strikes do correlate
+with increased wages, and more so than just the increase in minimum wage, we were unable 
+to establish that this correlation is statistically relevant. This is not to so say
+that strikes are not still a powerful tool for labor, but it is also not to say
+that strikes are a powerful tool for labor. Unfortunately our conclusions were
+inconclusive. Given the time, money, and man-power to truly clean and organize 
+the available data, perhaps we could say otherwise.
+
+
+
+
+
+
 
 In terms of future research, there are several obvious directions based on 
 additional available data and
