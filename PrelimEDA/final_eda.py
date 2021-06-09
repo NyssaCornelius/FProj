@@ -326,6 +326,7 @@ state_status['MinWageStatus'] = np.round(state_status['MinWageStatus'], 2)
 
 state_status['MinWageStatus'] = np.where(state_status['MinWageStatus'] >= 0.4, 'GreaterMinWage', 'MinWage')
 
+state_status.MinWageStatus.value_counts()
 #Get full names for stateCounts in statestrikes:
 statestrikes = stateCounts.copy()
 statestrikes.State.replace({v:k for k,v in us_state_abbrev.items()}, inplace = True)
@@ -350,7 +351,6 @@ print(m_comp_strikes.summary())
 #could still be due to chance
 
 
-#Add in information for minimum wage data
 
 # work_stop.to_pickle(".\\PrelimEDA\\work_stop.pkl")
 # finalfull.to_pickle(".\\PrelimEDA\\finalfull.pkl")
