@@ -107,11 +107,6 @@ work_stop['WSDuration'] = work_stop['WSDuration']+1
 #Change states from string to list of strings:
 work_stop['States'] = work_stop['States'].str.split(",")
 
-#VISUALIZATIONS:
-#NOTES:
-    #x-axes, per usual, are squished and need to be corrected. Can do this in jupyter more easily than Spyder.
-    
-
 #Minimum wage state data:
 # minwagestate.hist(column='Effective.Minimum.Wage')
 # minwagestate.boxplot(column='Effective.Minimum.Wage', by = ["State"], rot = 75)
@@ -182,11 +177,6 @@ industryCounts = work_stop['iTitle'].value_counts().reset_index().rename({'index
 otherStates = {k:'Other' for k in ['East Coast States', 'Nationwide', 'Interstate']}
 stateCounts = pd.Series(np.concatenate(work_stop['States'])).str.strip().replace(otherStates)
 stateCounts = pd.Series(np.where(stateCounts == "", None, stateCounts)).value_counts().reset_index().rename({'index': 'State', 0: 'Counts'}, axis = 1)
-#Need to look and see what they mean by nationwide, east coast states, and interstate
-
-#Last to do is find any significance for above data
-#Next is to match up sm data from BLS (should be open)
-#Will also need to graph, then Sunday write report on visualizations
 
 
 #Begin State-Metro Employment and Wage Data work:
@@ -199,26 +189,11 @@ smdata.columns
 smdata.columns = smdata.columns.str.strip()
 smdata['series_id'] = smdata['series_id'].str.strip()
 smdata['value'] = smdata.value.astype(str).str.strip()
-# smdata['value'] = smdata['value'].str.strip()
-
-
-# smdata = smdata.apply(lambda x: x.str.strip() if x.dtype == 'object' else x)
 
 #Convert value to float
 
-# smdata['value'] = smdata['value'].astype(float)
-
-len(smdata.series_id.unique())
-
 smdata['state_code'] = smdata['series_id'].str.extract(r'(\d{2})')
 smdata = smdata.loc[~smdata['state_code'].isin(['00','11','72','78','99'])]
-
-
-smdata.isnull().sum()
-smdata.dtypes
-
-
-# smdata.loc[smdata['value'].isnull()].head()
 
 #Create columns for data types in series id:
 smdata['data_type'] = smdata['series_id'].str.extract(r'(\d{2}$)')
@@ -232,8 +207,6 @@ smdata = smdata.loc[smdata['data_type'].isin(data_types.keys())]
 smdata['data_type'] = smdata['data_type'].replace(data_types)
 smdata['value'] = np.where(smdata['value'] == '-', np.nan, smdata['value'])
 smdata['value'] = smdata['value'].astype(float)
-
-# bama = smdata.loc[(smdata['stateID'] == '06')&(smdata['data_type'] == 'Employees')].copy()
 
 smdata['industry_code'] = smdata['series_id'].str.extract(r'\d{7}(\d{5})')+'000'
 
@@ -273,15 +246,6 @@ final_earnings = final_earnings.drop(labels = 'index', axis = 1)
 final_earnings['StateCode'] = final_earnings['state_name'].map(us_state_abbrev)
 finalfull['StateCode'] = finalfull['state_name'].map(us_state_abbrev)
 
-# work_stop.to_pickle(".\\PrelimEDA\\work_stop.pkl")
-# finalfull.to_pickle(".\\PrelimEDA\\finalfull.pkl")
-# final_earnings.to_pickle(".\\PrelimEDA\\final_earnings.pkl")
-# minwagestate.to_pickle(".\\PrelimEDA\\minwagestate.pkl")
-
-# final_earnings.industry_name.value_counts()
-
-# finalfull.to_csv('finalfull.csv', index = False)
-# final_earnings.to_csv('final_earnings.csv', index = False)
 
 #Need to group by industry and state, respectively and take the average over all years since 2007
 earnInd = final_earnings.groupby(['industry_name'])['AvgWeeklyEarnings'].mean().sort_values(ascending = False)
@@ -295,33 +259,12 @@ earnState = earnState.reset_index()
 #Can't know from this data
 #Leisure is lowest average weekly earnings
 
-#This data is depressing!!!
-
-
-#Next is some significance testing, then we're done!!
-
-#Do the states with more strikes really have higher minimum wage?
-#Higher average weekly earnings? Even considering the difference in number of employees?
-#Do the states with higher minimum wages have significantly higher minimum wages?
-#z-test? How would we figure out directionality?
-#Or maybe is there a correlation with number of strikes and minimum wage
-#Correlation between industry and average weekly earnings?
-#That seems obvious though, maybe not worth looking into
-
-
 
 cormin = minwagestate.corr(method='spearman')
 #years increase eff min in 2020 $ decreases, obviously CPI increases almost 1:1
 #Min wage 2020 $s decreases as years increase
 #Min wage 2020 $s decreases as CPI average increases
 
-corfull = finalfull.corr(method = 'spearman') #not helpful
-
-#chi square on work_stop?
-
-#would Virginia be a reference - adopts min wage
-#stateCounts
-#minwagestate
 
 #One way ANOVA on States Minimum Wage:
 stateminwage = []
@@ -409,4 +352,13 @@ print(m_comp_strikes.summary())
 
 #Add in information for minimum wage data
 
+# work_stop.to_pickle(".\\PrelimEDA\\work_stop.pkl")
+# finalfull.to_pickle(".\\PrelimEDA\\finalfull.pkl")
+# final_earnings.to_pickle(".\\PrelimEDA\\final_earnings.pkl")
+# minwagestate.to_pickle(".\\PrelimEDA\\minwagestate.pkl")
+
+# final_earnings.industry_name.value_counts()
+
+# finalfull.to_csv('finalfull.csv', index = False)
+# final_earnings.to_csv('final_earnings.csv', index = False)
 
